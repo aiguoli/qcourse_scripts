@@ -1,8 +1,11 @@
 ### 腾讯课堂脚本
+![pypi supported versions](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7%20%7C%203.8-blue)  
 要学一些东西，但腾讯课堂不支持自定义变速，播放时有水印，且有些老师的课一遍不够看，于是这个脚本诞生了。  
 时间有限，所以还是半自动的。(shitcode for now)  
 
 ### 使用方法
+#### 环境
+python3 + edge 89.0，其他浏览器换个webdriver就行了
 #### 批量下载(手动)：  
 1.新建`1.txt`  
 2.浏览器抓包  

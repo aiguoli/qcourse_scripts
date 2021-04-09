@@ -4,7 +4,6 @@ import time
 from downloader import download_single
 
 from msedge.selenium_tools import Edge, EdgeOptions
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -70,6 +69,7 @@ class getAuth:
     def get_video(self, video_url=None):
         if not video_url:
             print('请输入视频url！')
+        os.chdir(os.path.dirname(__file__))
         if not os.path.exists('cookies.json'):
             self.login()
         with open('cookies.json', 'r') as f:
@@ -88,7 +88,6 @@ class getAuth:
         # 等待视频开始加载，如果你的浏览器很牛逼，这里可以缩短一些
         time.sleep(15)
         networks = self.driver.execute_script('return window.performance.getEntries()')
-        self.close()
         ts_url = key_url = ''
         for network in networks:
             if '.ts?start' in network.get('name'):
@@ -96,6 +95,11 @@ class getAuth:
             elif 'get_dk' in network.get('name'):
                 key_url = network.get('name')
         title = self.driver.title
+        catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
+                                             '[0].parentNode.firstElementChild.innerText')
+        self.close()
+        os.mkdir(catalog)
+        os.chdir(os.path.join(os.getcwd(), catalog))
         return ts_url, key_url, title
 
 

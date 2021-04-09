@@ -13,9 +13,9 @@ def get_ts_url(url):
 
 def download(file_url, filename):
     res = requests.get(file_url)
+    print('downloading')
     with open(filename, 'wb') as f:
         f.write(res.content)
-    print('downloaded')
     return 0
 
 

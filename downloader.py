@@ -66,6 +66,7 @@ def download_single(ts_url, key_url, filename):
     decrypt_file(filename + '.ts', key)
     os.remove(filename)
     print(filename+' 下载完成！')
+    return 0
 
 
 def main():

@@ -1,6 +1,9 @@
 import json
 import os
 import time
+import requests
+
+import utils
 from downloader import download_single
 
 from msedge.selenium_tools import Edge, EdgeOptions
@@ -9,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-class getAuth:
+class QCourse:
     def __init__(self):
         # 初始化options
         self.prefs = {"download.default_directory": os.getcwd()}
@@ -37,10 +40,11 @@ class getAuth:
         print('登陆成功！')
 
     def get_course(self, cid=None):
+        # 古法取章节信息
         if not cid:
             print('请输入课程ID！')
             return 0
-        course_url = 'https://ke.qq.com/user/index/index.html#/plan/cid='+cid
+        course_url = 'https://ke.qq.com/user/index/index.html#/plan/cid=' + cid
         if not os.path.exists('cookies.json'):
             self.login()
         with open('cookies.json', 'r') as f:
@@ -84,9 +88,9 @@ class getAuth:
                 'secure': cookie['secure'],
                 'value': cookie['value']
             })
-        self.driver.get('https://ke.qq.com/webcourse/3026354/103142420#taid=10495495620144562&vid=5285890810286466918')
+        self.driver.get(video_url)
         # 等待视频开始加载，如果你的浏览器很牛逼，这里可以缩短一些
-        time.sleep(15)
+        time.sleep(10)
         networks = self.driver.execute_script('return window.performance.getEntries()')
         ts_url = key_url = ''
         for network in networks:
@@ -100,10 +104,34 @@ class getAuth:
         self.close()
         os.mkdir(catalog)
         os.chdir(os.path.join(os.getcwd(), catalog))
-        return ts_url, key_url, title
+        download_single(ts_url, key_url, title)
+
+
+def main():
+    menu = ['下载单个视频', '下载课程指定章节', '下载课程全部视频']
+    for i in menu:
+        print(str(menu.index(i))+'. '+i)
+    chosen = input('\n输入需要的功能：')
+    if chosen == 0:
+        url = input('输入视频链接：')
+        qq_course = QCourse()
+        qq_course.get_video(video_url=url)
+    elif chosen == 1:
+        print('developing...')
+    elif chosen == 2:
+        qq_course = QCourse()
+        cid = input('请输入课程cid:')
+        course_name = utils.get_course_from_api(cid)
+        print('获取课程信息成功')
+        url_dict = utils.get_all_urls(course_name)
+        for chapter in url_dict:
+            print('正在下载章节：'+chapter)
+            courses = url_dict.get(chapter)
+            for course in courses:
+                course_url = courses.get(course)
+                print('正在下载课程：'+course)
+                qq_course.get_video(video_url=course_url)
 
 
 if __name__ == '__main__':
-    login = getAuth()
-    ts_url, key_url, filename = login.get_video('https://ke.qq.com/webcourse/3026354/103142420#taid=10495495620144562&vid=5285890810286466918')
-    download_single(ts_url, key_url, filename)
+    main()

@@ -13,10 +13,25 @@ def get_ts_url(url):
 
 def download(file_url, filename):
     res = requests.get(file_url)
-    print('downloading')
     with open(filename, 'wb') as f:
         f.write(res.content)
     return 0
+
+
+def lg_download(file_url, filename):
+    response = requests.get(file_url, stream=True)
+    size = 0
+    chunk_size = 1024
+    content_size = int(response.headers['content-length'])
+    if response.status_code == 200:
+        print('正在下载 {filename},大小: {size:.2f} MB'.format(filename=filename,
+                                                                 size=content_size / chunk_size / 1024))
+        with open(filename, 'wb') as file:
+            for data in response.iter_content(chunk_size=chunk_size):
+                file.write(data)
+                size += len(data)
+                print('\r' + '[下载进度]:%s%.2f%%' % ('▋' * int(size * 50 / content_size),
+                                                  float(size / content_size * 100)), end='')
 
 
 def add_to_16(value):
@@ -60,7 +75,7 @@ def random_filename():
 
 def download_single(ts_url, key_url, filename):
     ts_url = get_ts_url(ts_url)
-    download(file_url=ts_url, filename=filename + '.ts')
+    lg_download(file_url=ts_url, filename=filename + '.ts')
     download(file_url=key_url, filename=filename)
     key = get_key(filename)
     decrypt_file(filename + '.ts', key)

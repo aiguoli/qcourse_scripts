@@ -46,8 +46,3 @@ def get_all_urls(filename):
             chapter_info.update({course.get('name'): get_course_url(course)})
         result.update({chapter_name: chapter_info})
     return result
-
-res = get_all_urls('22天勤率辉考研408全程班.json')
-for i in res:
-    for j in res[i]:
-        print(j)

@@ -112,6 +112,7 @@ def main():
     for i in menu:
         print(str(menu.index(i))+'. '+i)
     chosen = input('\n输入需要的功能：')
+    chosen = int(chosen)
     if chosen == 0:
         url = input('输入视频链接：')
         qq_course = QCourse()

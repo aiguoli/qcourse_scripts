@@ -11,3 +11,9 @@
 > pip install -r requirements.txt
 
 > python qcourse.py
+
+### 功能
+- 模拟登录，获取cookies（若cookies失效，删除`cookies.json`）
+- 下载单个视频
+- 按章节下载
+- 下载整个课程

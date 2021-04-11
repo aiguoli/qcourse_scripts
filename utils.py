@@ -46,3 +46,8 @@ def get_all_urls(filename):
             chapter_info.update({course.get('name'): get_course_url(course)})
         result.update({chapter_name: chapter_info})
     return result
+
+
+def print_menu(menu):
+    for item in menu:
+        print(str(menu.index(item))+'. '+item)

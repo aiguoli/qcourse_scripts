@@ -2,7 +2,6 @@ import re
 import requests
 from Crypto import Random
 from Crypto.Cipher import AES
-import uuid
 import os
 
 
@@ -68,11 +67,6 @@ def get_key(filename):
     return key
 
 
-def random_filename():
-    uuid_str = uuid.uuid4().hex
-    return uuid_str
-
-
 def download_single(ts_url, key_url, filename):
     ts_url = get_ts_url(ts_url)
     lg_download(file_url=ts_url, filename=filename + '.ts')
@@ -82,22 +76,22 @@ def download_single(ts_url, key_url, filename):
     os.remove(filename)
     print(filename+' 下载完成！')
     return 0
-
-
-def main():
-    with open('1.txt', 'r', encoding='utf-8') as f:
-        urls = f.readlines()
-    for i in range(0, len(urls), 3):
-        ts_url = get_ts_url(urls[i])
-        key_url = urls[i+1]
-        filename = urls[i+2].replace('\n', '').replace('u_', '')
-        download(file_url=ts_url, filename=filename+'.ts')
-        download(file_url=key_url, filename=filename)
-        key = get_key(filename)
-        decrypt_file(filename+'.ts', key)
-        os.remove(filename)
-        print('done')
-
-
-if __name__ == '__main__':
-    main()
+#
+#
+# def main():
+#     with open('1.txt', 'r', encoding='utf-8') as f:
+#         urls = f.readlines()
+#     for i in range(0, len(urls), 3):
+#         ts_url = get_ts_url(urls[i])
+#         key_url = urls[i+1]
+#         filename = urls[i+2].replace('\n', '').replace('u_', '')
+#         download(file_url=ts_url, filename=filename+'.ts')
+#         download(file_url=key_url, filename=filename)
+#         key = get_key(filename)
+#         decrypt_file(filename+'.ts', key)
+#         os.remove(filename)
+#         print('done')
+#
+#
+# if __name__ == '__main__':
+#     main()

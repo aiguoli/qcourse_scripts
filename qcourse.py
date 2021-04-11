@@ -1,7 +1,7 @@
 import json
 import os
 import time
-import requests
+from selenium.webdriver.common.keys import Keys
 
 import utils
 from downloader import download_single
@@ -19,6 +19,7 @@ class QCourse:
         self.options = EdgeOptions()
         self.options.use_chromium = True
         self.options.add_experimental_option('prefs', self.prefs)
+        self.options.add_argument("--mute-audio")
 
         self.login_url = 'https://ke.qq.com/'
 
@@ -90,7 +91,8 @@ class QCourse:
             })
         self.driver.get(video_url)
         # 等待视频开始加载，如果你的浏览器很牛逼，这里可以缩短一些
-        time.sleep(10)
+        time.sleep(7)
+        self.driver.find_element_by_tag_name('body').send_keys(Keys.SPACE)
         networks = self.driver.execute_script('return window.performance.getEntries()')
         ts_url = key_url = ''
         for network in networks:
@@ -101,16 +103,16 @@ class QCourse:
         title = self.driver.title
         catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
                                              '[0].parentNode.firstElementChild.innerText')
-        self.close()
-        os.mkdir(catalog)
+        # self.close()
+        if not os.path.exists(catalog):
+            os.mkdir(catalog)
         os.chdir(os.path.join(os.getcwd(), catalog))
         download_single(ts_url, key_url, title)
 
 
 def main():
     menu = ['下载单个视频', '下载课程指定章节', '下载课程全部视频']
-    for i in menu:
-        print(str(menu.index(i))+'. '+i)
+    utils.print_menu(menu)
     chosen = input('\n输入需要的功能：')
     chosen = int(chosen)
     if chosen == 0:
@@ -118,7 +120,22 @@ def main():
         qq_course = QCourse()
         qq_course.get_video(video_url=url)
     elif chosen == 1:
-        print('developing...')
+        qq_course = QCourse()
+        cid = input('请输入课程cid:')
+        course_name = utils.get_course_from_api(cid)
+        print('获取课程信息成功')
+        url_dict = utils.get_all_urls(course_name)
+        chapter_names = list(url_dict.keys())
+        utils.print_menu(chapter_names)
+        chapter_index = input('请输入要下载的章节：')
+        chapter_name = chapter_names[int(chapter_index)]
+        courses = url_dict.get(chapter_name)
+        print('即将开始下载章节：'+chapter_name)
+        for course in courses:
+            course_url = courses.get(course)
+            print('正在下载课程：' + course)
+            print(course_url)
+            qq_course.get_video(video_url=course_url)
     elif chosen == 2:
         qq_course = QCourse()
         cid = input('请输入课程cid:')

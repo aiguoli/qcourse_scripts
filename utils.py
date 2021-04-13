@@ -8,8 +8,8 @@ def get_course_from_api(cid=None):
         print('请输入cid！')
     url = 'https://ke.qq.com/cgi-bin/course/basic_info?cid=' + str(cid)
     response = requests.get(url).json()
-    name = response.get('result').get('course_detail').get('name') + '.json'
-    with open(name, 'w') as f:
+    name = response.get('result').get('course_detail').get('name')
+    with open(name+'.json', 'w') as f:
         f.write(json.dumps(response))
     return name
 

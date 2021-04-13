@@ -11,6 +11,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 BASE_DIR = os.getcwd()
+COURSE_DIR = os.path.join(BASE_DIR, 'courses')
+if not os.path.exists(COURSE_DIR):
+    os.mkdir(COURSE_DIR)
 
 
 class QCourse:
@@ -44,10 +47,10 @@ class QCourse:
     def close(self):
         self.driver.close()
 
-    def get_video(self, video_url=None):
+    def get_video(self, video_url=None, path=None):
         if not video_url:
             print('请输入视频url！')
-        os.chdir(BASE_DIR)
+        # os.chdir(BASE_DIR)
         if not os.path.exists('cookies.json'):
             self.login()
         with open('cookies.json', 'r') as f:
@@ -73,13 +76,10 @@ class QCourse:
             elif 'get_dk' in network.get('name'):
                 key_url = network.get('name')
         title = self.driver.title
-        catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
-                                             '[0].parentNode.firstElementChild.innerText')
-        if not os.path.exists(catalog):
-            os.mkdir(catalog)
-        os.chdir(os.path.join(os.getcwd(), catalog))
-        download_single(ts_url, key_url, title)
-        self.close()
+        # catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
+        #                                      '[0].parentNode.firstElementChild.innerText')
+        # os.chdir(os.path.join(os.getcwd(), catalog))
+        download_single(ts_url, key_url, title, path)
 
 
 def main():
@@ -91,36 +91,44 @@ def main():
         url = input('输入视频链接：')
         qq_course = QCourse()
         qq_course.get_video(video_url=url)
+        qq_course.close()
     elif chosen == 1:
-        qq_course = QCourse()
         cid = input('请输入课程cid:')
         course_name = utils.get_course_from_api(cid)
         print('获取课程信息成功')
-        url_dict = utils.get_all_urls(course_name)
+        url_dict = utils.get_all_urls(course_name+'.json')
         chapter_names = list(url_dict.keys())
         utils.print_menu(chapter_names)
         chapter_index = input('请输入要下载的章节：')
         chapter_name = chapter_names[int(chapter_index)]
         courses = url_dict.get(chapter_name)
+        chapter_name = chapter_name.replace('/', '／') .replace('\\', '＼')
         print('即将开始下载章节：' + chapter_name)
+        qq_course = QCourse()
+        chapter_path = os.path.join(COURSE_DIR, course_name, chapter_name)
+        if not os.path.exists(chapter_path):
+            os.makedirs(chapter_path)
         for course in courses:
             course_url = courses.get(course)
-            print('正在下载课程：' + course)
-            print(course_url)
-            qq_course.get_video(video_url=course_url)
+            qq_course.get_video(video_url=course_url, path=chapter_path)
+        qq_course.close()
     elif chosen == 2:
         qq_course = QCourse()
         cid = input('请输入课程cid:')
         course_name = utils.get_course_from_api(cid)
         print('获取课程信息成功')
-        url_dict = utils.get_all_urls(course_name)
+        url_dict = utils.get_all_urls(course_name+'.json')
         for chapter in url_dict:
+            chapter_path = os.path.join(COURSE_DIR, course_name, chapter)
+            if not os.path.exists(chapter_path):
+                os.makedirs(chapter_path)
             print('正在下载章节：' + chapter)
             courses = url_dict.get(chapter)
             for course in courses:
                 course_url = courses.get(course)
-                print('正在下载课程：' + course)
-                qq_course.get_video(video_url=course_url)
+                print('正在下载课程：' + course + ', ', end='')
+                qq_course.get_video(video_url=course_url, path=chapter_path)
+        qq_course.close()
 
 
 if __name__ == '__main__':

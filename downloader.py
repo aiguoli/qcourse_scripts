@@ -9,15 +9,16 @@ def get_ts_url(url):
     return parsed_url.replace('\n', '')
 
 
-def download(file_url, filename):
+def download(file_url, file):
     res = requests.get(file_url)
-    with open(filename, 'wb') as f:
+    with open(file, 'wb') as f:
         f.write(res.content)
     return 0
 
 
-def lg_download(file_url, filename):
+def lg_download(file_url, filename, path):
     # 用来下载大文件，有进度条
+    file = os.path.join(path, filename)
     response = requests.get(file_url, stream=True)
     size = 0
     chunk_size = 1024
@@ -25,7 +26,7 @@ def lg_download(file_url, filename):
     if response.status_code == 200:
         print('正在下载 {filename},大小: {size:.2f} MB'.format(filename=filename,
                                                          size=content_size / chunk_size / 1024))
-        with open(filename, 'wb') as file:
+        with open(file, 'wb') as file:
             for data in response.iter_content(chunk_size=chunk_size):
                 file.write(data)
                 size += len(data)
@@ -60,13 +61,14 @@ def get_key(filename):
     return key
 
 
-def download_single(ts_url, key_url, filename):
+def download_single(ts_url, key_url, filename, path):
     filename = filename.replace('/', '／') .replace('\\', '＼')
     ts_url = get_ts_url(ts_url)
-    lg_download(file_url=ts_url, filename=filename + '.ts')
-    download(file_url=key_url, filename=filename)
-    key = get_key(filename)
-    decrypt_file(filename + '.ts', key)
-    os.remove(filename)
+    file = os.path.join(path, filename)
+    lg_download(file_url=ts_url, filename=filename + '.ts', path=path)
+    download(file_url=key_url, file=file)
+    key = get_key(file)
+    decrypt_file(file + '.ts', key)
+    os.remove(file)
     print('\n' + filename + ' 下载完成！')
     return 0

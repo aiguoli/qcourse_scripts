@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from selenium.webdriver.common.keys import Keys
 
 import utils
 from downloader import download_single
@@ -10,6 +9,8 @@ from msedge.selenium_tools import Edge, EdgeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+BASE_DIR = os.getcwd()
 
 
 class QCourse:
@@ -40,41 +41,13 @@ class QCourse:
             f.write(jsonCookies)
         print('登陆成功！')
 
-    def get_course(self, cid=None):
-        # 古法取章节信息
-        if not cid:
-            print('请输入课程ID！')
-            return 0
-        course_url = 'https://ke.qq.com/user/index/index.html#/plan/cid=' + cid
-        if not os.path.exists('cookies.json'):
-            self.login()
-        with open('cookies.json', 'r') as f:
-            listCookies = json.loads(f.read())
-        self.driver.get(course_url)
-        for cookie in listCookies:
-            self.driver.add_cookie({
-                'domain': '.ke.qq.com',  # 此处xxx.com前，需要带点
-                'httpOnly': cookie['httpOnly'],
-                'name': cookie['name'],
-                'path': '/',
-                'secure': cookie['secure'],
-                'value': cookie['value']
-            })
-        self.driver.get(course_url)
-        time.sleep(2)
-        with open('getMenu.js', 'r') as f:
-            get_menu_js = f.read()
-        if os.path.exists(os.path.join(os.getcwd(), 'menu.json')):
-            os.remove(os.path.join(os.getcwd(), 'menu.json'))
-        self.driver.execute_script(get_menu_js)
-
     def close(self):
         self.driver.close()
 
     def get_video(self, video_url=None):
         if not video_url:
             print('请输入视频url！')
-        os.chdir(os.path.dirname(__file__))
+        os.chdir(BASE_DIR)
         if not os.path.exists('cookies.json'):
             self.login()
         with open('cookies.json', 'r') as f:
@@ -82,7 +55,7 @@ class QCourse:
         self.driver.get(video_url)
         for cookie in listCookies:
             self.driver.add_cookie({
-                'domain': '.ke.qq.com',  # 此处xxx.com前，需要带点
+                'domain': '.ke.qq.com',
                 'httpOnly': cookie['httpOnly'],
                 'name': cookie['name'],
                 'path': '/',
@@ -91,8 +64,7 @@ class QCourse:
             })
         self.driver.get(video_url)
         # 等待视频开始加载，如果你的浏览器很牛逼，这里可以缩短一些
-        time.sleep(7)
-        self.driver.find_element_by_tag_name('body').send_keys(Keys.SPACE)
+        time.sleep(10)
         networks = self.driver.execute_script('return window.performance.getEntries()')
         ts_url = key_url = ''
         for network in networks:
@@ -103,11 +75,11 @@ class QCourse:
         title = self.driver.title
         catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
                                              '[0].parentNode.firstElementChild.innerText')
-        # self.close()
         if not os.path.exists(catalog):
             os.mkdir(catalog)
         os.chdir(os.path.join(os.getcwd(), catalog))
         download_single(ts_url, key_url, title)
+        self.close()
 
 
 def main():
@@ -130,7 +102,7 @@ def main():
         chapter_index = input('请输入要下载的章节：')
         chapter_name = chapter_names[int(chapter_index)]
         courses = url_dict.get(chapter_name)
-        print('即将开始下载章节：'+chapter_name)
+        print('即将开始下载章节：' + chapter_name)
         for course in courses:
             course_url = courses.get(course)
             print('正在下载课程：' + course)
@@ -143,11 +115,11 @@ def main():
         print('获取课程信息成功')
         url_dict = utils.get_all_urls(course_name)
         for chapter in url_dict:
-            print('正在下载章节：'+chapter)
+            print('正在下载章节：' + chapter)
             courses = url_dict.get(chapter)
             for course in courses:
                 course_url = courses.get(course)
-                print('正在下载课程：'+course)
+                print('正在下载课程：' + course)
                 qq_course.get_video(video_url=course_url)
 
 

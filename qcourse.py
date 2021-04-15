@@ -22,6 +22,8 @@ class QCourse:
         self.prefs = {"download.default_directory": os.getcwd()}
         self.options = EdgeOptions()
         self.options.use_chromium = True
+        self.options.add_argument("log-level=3")
+        self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
         self.options.add_experimental_option('prefs', self.prefs)
         self.options.add_argument("--mute-audio")
 
@@ -104,6 +106,7 @@ def main():
         courses = url_dict.get(chapter_name)
         chapter_name = chapter_name.replace('/', '／') .replace('\\', '＼')
         print('即将开始下载章节：' + chapter_name)
+        print('='*20)
         qq_course = QCourse()
         chapter_path = os.path.join(COURSE_DIR, course_name, chapter_name)
         if not os.path.exists(chapter_path):

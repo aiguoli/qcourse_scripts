@@ -1,5 +1,5 @@
 cookies.json
 1.txt
-__pycache__
-.idea
+/__pycache__/
+/.idea/
 /courses/

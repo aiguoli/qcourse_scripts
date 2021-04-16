@@ -68,8 +68,14 @@ class QCourse:
                 'value': cookie['value']
             })
         self.driver.get(video_url)
-        # 等待视频开始加载，如果你的浏览器很牛逼，这里可以缩短一些
-        time.sleep(10)
+        # 等待视频开始播放
+        WebDriverWait(self.driver, 300).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'loki-time'))
+        )
+        WebDriverWait(self.driver, 300).until_not(
+            lambda driver: driver.find_element_by_class_name('loki-time').get_attribute("innerHTML") == '00:00 / 00:00'
+        )
+
         networks = self.driver.execute_script('return window.performance.getEntries()')
         ts_url = key_url = ''
         for network in networks:

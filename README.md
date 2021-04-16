@@ -17,7 +17,6 @@
 ```
 ##### Tips
 - cid是你登录后url里面的参数，代表course_id
-- 适度调整`qcourse.py`第72行
 - 若登录失效，删除`cookies.json`再重新运行脚本
 ### 功能
 - 模拟登录，获取cookies

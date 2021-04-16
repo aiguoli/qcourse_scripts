@@ -1,5 +1,7 @@
 import requests
 import json
+import os
+import subprocess
 
 
 def get_course_from_api(cid=None):
@@ -51,3 +53,14 @@ def get_all_urls(filename):
 def print_menu(menu):
     for item in menu:
         print(str(menu.index(item))+'. '+item)
+
+
+def ts2mp4(file):
+    ffmpeg = os.path.join(os.getcwd(), 'ffmpeg.exe')
+    basename = os.path.basename(file).split('.')[0]
+    file_dir = os.path.split(file)[0]
+    output = os.path.join(file_dir, basename)
+    cmd = ffmpeg + " -i " + file + " -c copy " + output + '.mp4'
+    # os.system(cmd)
+    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    os.remove(file)

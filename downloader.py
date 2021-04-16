@@ -2,6 +2,7 @@ import re
 import requests
 from Crypto.Cipher import AES
 import os
+from utils import ts2mp4
 
 
 def get_ts_url(url):
@@ -70,5 +71,6 @@ def download_single(ts_url, key_url, filename, path):
     key = get_key(file)
     decrypt_file(file + '.ts', key)
     os.remove(file)
+    ts2mp4(file + '.ts')
     print('\n' + filename + ' 下载完成！')
     return 0

@@ -31,8 +31,8 @@ def lg_download(file_url, filename, path):
             for data in response.iter_content(chunk_size=chunk_size):
                 file.write(data)
                 size += len(data)
-                print('\r' + '[下载进度]:%s%.2f%%' % ('▋' * int(size * 50 / content_size),
-                                                  float(size / content_size * 100)), end='')
+                print('\r' + '[下载进度]:%s %.2f%%' % ('▋' * int(size * 50 / content_size),
+                                                   float(size / content_size * 100)), end='')
 
 
 def add_to_16(value):
@@ -63,7 +63,7 @@ def get_key(filename):
 
 
 def download_single(ts_url, key_url, filename, path):
-    filename = filename.replace('/', '／') .replace('\\', '＼')
+    filename = filename.replace('/', '／').replace('\\', '＼')
     ts_url = get_ts_url(ts_url)
     file = os.path.join(path, filename)
     lg_download(file_url=ts_url, filename=filename + '.ts', path=path)

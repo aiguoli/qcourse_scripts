@@ -52,21 +52,8 @@ class QCourse:
     def get_video(self, video_url=None, path=None):
         if not video_url:
             print('请输入视频url！')
-        # os.chdir(BASE_DIR)
-        if not os.path.exists('cookies.json'):
-            self.login()
-        with open('cookies.json', 'r') as f:
-            listCookies = json.loads(f.read())
+        # 跳转一次没法跳转，可能是设置了preventDefault
         self.driver.get(video_url)
-        for cookie in listCookies:
-            self.driver.add_cookie({
-                'domain': '.ke.qq.com',
-                'httpOnly': cookie['httpOnly'],
-                'name': cookie['name'],
-                'path': '/',
-                'secure': cookie['secure'],
-                'value': cookie['value']
-            })
         self.driver.get(video_url)
         # 等待视频开始播放
         WebDriverWait(self.driver, 300).until(
@@ -84,10 +71,23 @@ class QCourse:
             elif 'get_dk' in network.get('name'):
                 key_url = network.get('name')
         title = self.driver.title
-        # catalog = self.driver.execute_script('return document.getElementsByClassName("task-item task-info active")'
-        #                                      '[0].parentNode.firstElementChild.innerText')
-        # os.chdir(os.path.join(os.getcwd(), catalog))
         download_single(ts_url, key_url, title, path)
+
+    def load_cookies(self):
+        if not os.path.exists('cookies.json'):
+            self.login()
+        with open('cookies.json', 'r') as f:
+            listCookies = json.loads(f.read())
+        self.driver.get(self.login_url)
+        for cookie in listCookies:
+            self.driver.add_cookie({
+                'domain': '.ke.qq.com',
+                'httpOnly': cookie['httpOnly'],
+                'name': cookie['name'],
+                'path': '/',
+                'secure': cookie['secure'],
+                'value': cookie['value']
+            })
 
 
 def main():
@@ -98,6 +98,7 @@ def main():
     if chosen == 0:
         url = input('输入视频链接：')
         qq_course = QCourse()
+        qq_course.load_cookies()
         qq_course.get_video(video_url=url)
         qq_course.close()
     elif chosen == 1:
@@ -114,6 +115,7 @@ def main():
         print('即将开始下载章节：' + chapter_name)
         print('='*20)
         qq_course = QCourse()
+        qq_course.load_cookies()
         chapter_path = os.path.join(COURSE_DIR, course_name, chapter_name)
         if not os.path.exists(chapter_path):
             os.makedirs(chapter_path)
@@ -122,10 +124,11 @@ def main():
             qq_course.get_video(video_url=course_url, path=chapter_path)
         qq_course.close()
     elif chosen == 2:
-        qq_course = QCourse()
         cid = input('请输入课程cid:')
         course_name = utils.get_course_from_api(cid)
-        print('获取课程信息成功')
+        print('获取课程信息成功,准备下载！')
+        qq_course = QCourse()
+        qq_course.load_cookies()
         url_dict = utils.get_all_urls(course_name+'.json')
         for chapter in url_dict:
             chapter_path = os.path.join(COURSE_DIR, course_name, chapter)

@@ -60,7 +60,7 @@ def ts2mp4(file):
     basename = os.path.basename(file).split('.')[0]
     file_dir = os.path.split(file)[0]
     output = os.path.join(file_dir, basename)
-    cmd = ffmpeg + " -i " + file + " -c copy " + output + '.mp4'
+    cmd = ffmpeg + " -i \"" + file + "\" -c copy \"" + output + "\".mp4"
     # os.system(cmd)
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     os.remove(file)

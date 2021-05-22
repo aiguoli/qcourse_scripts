@@ -104,14 +104,20 @@ def main():
     elif chosen == 1:
         cid = input('请输入课程cid:')
         course_name = utils.get_course_from_api(cid)
+        filename = course_name+'.json'
         print('获取课程信息成功')
-        url_dict = utils.get_all_urls(course_name+'.json')
+        terms = utils.get_terms(filename)
+        term_index = 0
+        if len(terms) > 1:
+            utils.print_menu([i.get('name') for i in terms])
+            term_index = input('请选择学期：')
+        url_dict = utils.get_all_urls(filename, int(term_index))
         chapter_names = list(url_dict.keys())
         utils.print_menu(chapter_names)
         chapter_index = input('请输入要下载的章节：')
         chapter_name = chapter_names[int(chapter_index)]
         courses = url_dict.get(chapter_name)
-        chapter_name = chapter_name.replace('/', '／') .replace('\\', '＼')
+        chapter_name = chapter_name.replace('/', '／').replace('\\', '＼')
         print('即将开始下载章节：' + chapter_name)
         print('='*20)
         qq_course = QCourse()

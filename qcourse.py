@@ -33,11 +33,14 @@ class QCourse:
 
     def login(self):
         self.driver.get('https://ke.qq.com/')
+        WebDriverWait(self.driver, 300).until_not(
+            EC.presence_of_element_located((By.NAME, 'body'))
+        )
         self.driver.find_element_by_id('js_login').click()
         time.sleep(1)
 
         WebDriverWait(self.driver, 300).until_not(
-            EC.presence_of_element_located((By.CLASS_NAME, 'ptlogin-mask'))
+            EC.presence_of_element_located((By.CLASS_NAME, 'login-mask'))
         )
 
         dictCookies = self.driver.get_cookies()
@@ -106,11 +109,7 @@ def main():
         course_name = utils.get_course_from_api(cid)
         filename = course_name+'.json'
         print('获取课程信息成功')
-        terms = utils.get_terms(filename)
-        term_index = 0
-        if len(terms) > 1:
-            utils.print_menu([i.get('name') for i in terms])
-            term_index = input('请选择学期：')
+        term_index = utils.choose_term(filename)
         url_dict = utils.get_all_urls(filename, int(term_index))
         chapter_names = list(url_dict.keys())
         utils.print_menu(chapter_names)
@@ -132,10 +131,11 @@ def main():
     elif chosen == 2:
         cid = input('请输入课程cid:')
         course_name = utils.get_course_from_api(cid)
+        term_index = utils.choose_term(course_name+'.json')
         print('获取课程信息成功,准备下载！')
         qq_course = QCourse()
         qq_course.load_cookies()
-        url_dict = utils.get_all_urls(course_name+'.json')
+        url_dict = utils.get_all_urls(course_name+'.json', term_index)
         for chapter in url_dict:
             chapter_path = os.path.join(COURSE_DIR, course_name, chapter)
             if not os.path.exists(chapter_path):

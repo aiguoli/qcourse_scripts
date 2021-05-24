@@ -72,3 +72,12 @@ def ts2mp4(file):
     # os.system(cmd)
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     os.remove(file)
+
+
+def choose_term(filename):
+    terms = get_terms(filename)
+    term_index = 0
+    if len(terms) > 1:
+        print_menu([i.get('name') for i in terms])
+        term_index = input('请选择学期：')
+    return term_index

@@ -80,4 +80,4 @@ def choose_term(filename):
     if len(terms) > 1:
         print_menu([i.get('name') for i in terms])
         term_index = input('请选择学期：')
-    return term_index
+    return int(term_index)

@@ -11,6 +11,7 @@
 下载代码并解压，确保你安装了python，版本>=3.5
 
 windows：
+依次运行下面的命令(保姆级教程)
 ``` shell
 cd qcourse_scripts
 
@@ -19,6 +20,8 @@ python -m venv qcourse-venv
 qcourse-venv\scripts\activate
 
 pip install -r requirements.txt
+
+playwright install
 
 python qcourse.py
 ```

@@ -78,8 +78,6 @@ async def download_single(ts_url, key_url, filename, path):
     file = path.joinpath(filename)
     await async_download(ts_url, path, filename)
     download(file_url=key_url, file=file)
-    print(key_url)
-    print('12')
     key = get_key(file)
     decrypt_file(str(file) + '.ts', key)
     file.unlink()

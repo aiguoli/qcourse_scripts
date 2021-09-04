@@ -79,7 +79,9 @@ async def download_selected_chapter(term_id, filename, chapter_name, courses):
         file_id = course.get('resid_list')
         urls = get_download_urls(term_id, file_id)
         tasks.append(asyncio.create_task(download_single(ts_url=urls[0], key_url=urls[1], filename=course_name, path=path)))
-    await asyncio.wait(tasks)
+    sem = asyncio.Semaphore(3)
+    async with sem:
+        await asyncio.wait(tasks)
 
 
 def main():

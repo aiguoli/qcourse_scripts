@@ -169,7 +169,7 @@ def get_video_info(file_id, t, sign, us):
 
 def get_token_for_key_url():
     # 这个key_url后面要接一个操蛋的token，研究发现，token是如下结构base64加密后得到的
-    # uin=2300043476;skey=;pskey=;plskey=;ext=;uid_type=0;uid_origin_uid_type=0;cid=3026354;term_id=103142420;vod_type=0
+    # uin={uin};skey=;pskey=;plskey=;ext=;uid_type=0;uid_origin_uid_type=0;cid={cid};term_id={term_id};vod_type=0
     # 其中的plskey是要填的，这个东西来自登陆时的token去掉结尾的两个"="，也可以在cookies.json里获取
     cookies = Path('cookies.json')
     if cookies.exists():
@@ -179,14 +179,14 @@ def get_token_for_key_url():
         for cookie in cookies:
             if cookie.get('name') == 'p_lskey':
                 p_lskey = cookie.get('value')
-            if cookie.get('name') == 'ptui_loginuin':
+            if cookie.get('name') == 'clientuin':
                 qq_id = cookie.get('value')
         str_token = 'uin={qq_id};' \
                     'skey=;pskey=;' \
                     'plskey={p_lskey};' \
                     'ext=;uid_type=0;uid_origin_uid_type=0;cid=3026354;term_id=103142420;vod_type=0'\
             .format(qq_id=qq_id, p_lskey=p_lskey)
-        return base64.b64encode(str_token.encode()).decode()
+        return base64.b64encode(str_token.encode()).decode()[:-2]
 
 
 def get_video_url(video_info, video_index=-1):

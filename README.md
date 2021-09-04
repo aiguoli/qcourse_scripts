@@ -19,7 +19,7 @@ python -m venv qcourse-venv
 
 qcourse-venv\scripts\activate
 
-pip install -r requirements.txt
+pip install -Ur requirements.txt
 
 playwright install msedge
 

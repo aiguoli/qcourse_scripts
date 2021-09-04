@@ -2,8 +2,6 @@ from pathlib import Path
 
 import requests
 from Crypto.Cipher import AES
-import asyncio
-import aiohttp
 import httpx
 
 from utils import ts2mp4

@@ -6,7 +6,7 @@ from uuid import uuid1
 from playwright.sync_api import sync_playwright
 
 from utils import print_menu, get_course_from_api, get_download_url_from_course_url, choose_term, get_all_urls, \
-    get_download_urls, choose_chapter, get_courses_from_chapter
+    get_download_urls, choose_chapter, get_courses_from_chapter, get_chapters, get_chapters_from_file
 from downloader import download_single
 
 
@@ -101,10 +101,9 @@ def main():
     elif chosen == 1:
         cid = input('请输入课程cid:')
         course_name = get_course_from_api(cid)
-        filename = course_name
         print('获取课程信息成功')
 
-        term_index, term_id, term = choose_term(filename+'.json')
+        term_index, term_id, term = choose_term(course_name+'.json')
         chapter = choose_chapter(term)
         chapter_name = chapter.get('name').replace('/', '／').replace('\\', '＼')
         courses = get_courses_from_chapter(chapter)
@@ -114,23 +113,23 @@ def main():
         chapter_path = COURSE_DIR.joinpath(course_name, chapter_name)
         if not chapter_path.exists():
             chapter_path.mkdir(parents=True)
-        asyncio.run(download_selected_chapter(term_id, filename, chapter_name, courses))
+        asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses))
     elif chosen == 2:
         cid = input('请输入课程cid:')
         course_name = get_course_from_api(cid)
-        term_index = choose_term(course_name+'.json')
+        term_index, term_id, term = choose_term(course_name+'.json')
         print('获取课程信息成功,准备下载！')
-        url_dict = get_all_urls(course_name+'.json', term_index)
-        for chapter in url_dict:
-            chapter_path = COURSE_DIR.joinpath(course_name, chapter)
+        chapters = get_chapters_from_file(course_name+'.json', term_index)
+        for chapter in chapters:
+            chapter_name = chapter.get('name').replace('/', '／').replace('\\', '＼')
+            courses = get_courses_from_chapter(chapter)
+            print('即将开始下载章节：' + chapter_name)
+            print('=' * 20)
+
+            chapter_path = COURSE_DIR.joinpath(course_name, chapter_name)
             if not chapter_path.exists():
                 chapter_path.mkdir(parents=True)
-            print('正在下载章节：' + chapter)
-            courses = url_dict.get(chapter)
-            for course in courses:
-                course_url = courses.get(course)
-                print('正在下载课程：' + course + ', ', end='')
-                parse_course_url_and_download(course_url, filename=course, path=Path('courses', course_name, chapter))
+            asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses))
     else:
         print('请按要求输入！')
 

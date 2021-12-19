@@ -1,5 +1,7 @@
 import base64
 import re
+import sys
+import time
 from pathlib import Path
 
 import requests
@@ -15,7 +17,7 @@ def get_course_from_api(cid=None):
     url = 'https://ke.qq.com/cgi-bin/course/basic_info?cid=' + str(cid)
     response = requests.get(url).json()
     name = response.get('result').get('course_detail').get('name').replace('/', '／').replace('\\', '＼')
-    with open(name+'.json', 'w') as f:
+    with open(name + '.json', 'w') as f:
         f.write(json.dumps(response))
     return name
 
@@ -50,7 +52,7 @@ def get_chapters_from_file(filename, term_index):
     # 从json文件内获取章节信息
     with open(filename, 'r') as f:
         course_info = json.loads(f.read())
-    chapters = course_info.get('result').get('course_detail').get('terms')[term_index].get('chapter_info')[0]\
+    chapters = course_info.get('result').get('course_detail').get('terms')[term_index].get('chapter_info')[0] \
         .get('sub_info')
     return chapters
 
@@ -89,7 +91,22 @@ def get_all_urls(filename, term_index):
 
 def print_menu(menu):
     for item in menu:
-        print(str(menu.index(item))+'. '+item)
+        print(str(menu.index(item)) + '. ' + item)
+
+
+def run_shell(shell, retry=True, retry_times=3, is_output=True):
+    cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
+                           stdout=sys.stdout, universal_newlines=True, shell=True, bufsize=1)
+
+    print(shell)
+    if is_output:
+        cmd.communicate()
+    if retry and cmd.returncode != 0:
+        time.sleep(1)
+        if retry_times > 0:
+            return run_shell(shell, retry=True, retry_times=retry_times - 1)
+        raise RuntimeError(f'{shell} 执行失败，异常退出')
+    return cmd.returncode
 
 
 def ts2mp4(file):
@@ -99,7 +116,7 @@ def ts2mp4(file):
     file_dir = file.parent
     output = file_dir.joinpath(basename)
     cmd = str(ffmpeg) + " -i \"" + str(file) + "\" -c copy \"" + str(output) + "\".mp4"
-    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    run_shell(cmd, retry_times=False,is_output=False)
     file.unlink()
 
 
@@ -167,35 +184,40 @@ def get_video_info(file_id, t, sign, us):
     return response
 
 
-def get_token_for_key_url():
+def get_token_for_key_url(term_id, cid):
     # 这个key_url后面要接一个操蛋的token，研究发现，token是如下结构base64加密后得到的
     # uin={uin};skey=;pskey=;plskey=;ext=;uid_type=0;uid_origin_uid_type=0;cid={cid};term_id={term_id};vod_type=0
     # 其中的plskey是要填的，这个东西来自登陆时的token去掉结尾的两个"="，也可以在cookies.json里获取
+    """
+    2021-12-19 更新
+    'uin=xxx;skey=xxx;pskey=xxx;plskey=xxx;ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid=xxx;term_id=xxx;vod_type=0'
+    :return:
+    """
     cookies = Path('cookies.json')
     if cookies.exists():
         cookies = json.loads(cookies.read_bytes())
-        qq_id = None
-        p_lskey = None
         for cookie in cookies:
             if cookie.get('name') == 'p_lskey':
-                p_lskey = cookie.get('value')
-            if cookie.get('name') == 'clientuin':
-                qq_id = cookie.get('value')
-        str_token = 'uin={qq_id};' \
-                    'skey=;pskey=;' \
-                    'plskey={p_lskey};' \
-                    'ext=;uid_type=0;uid_origin_uid_type=0;cid=3026354;term_id=103142420;vod_type=0'\
-            .format(qq_id=qq_id, p_lskey=p_lskey)
+                plskey = cookie.get('value')
+            if cookie.get('name') == 'ptui_loginuin':
+                uin = cookie.get('value')
+            if cookie.get('name') == 'skey':
+                skey = cookie.get('value')
+            if cookie.get('name') == 'p_skey':
+                pskey = cookie.get('value')
+
+        str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid={cid};term_id={term_id};vod_type=0' \
+            .format(uin=uin, skey=skey, pskey=pskey, plskey=plskey, cid=cid, term_id=term_id)
         return base64.b64encode(str_token.encode()).decode()[:-2]
 
 
-def get_video_url(video_info, video_index=-1):
+def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
     # 接收来自get_video_info函数返回的视频信息
     # 根据video_index返回不同清晰度的视频ts下载链接
     video = video_info.get('videoInfo').get('transcodeList')[video_index]
     if video:
         video_url = video.get('url').replace('.m3u8', '.ts')
-        key_url = get_key_url_from_m3u8(video.get('url')) + '&token=' + get_token_for_key_url()
+        key_url = get_key_url_from_m3u8(video.get('url')) + '&token=' + get_token_for_key_url(term_id=term_id, cid=cid)
         return video_url, key_url
 
 
@@ -213,7 +235,7 @@ def get_download_url_from_course_url(video_url, video_index=-1):
     return get_video_url(video_info, video_index)
 
 
-def get_download_urls(term_id, file_id, video_index=-1):
+def get_download_urls(term_id, file_id, video_index=-1, cid=None):
     tokens = get_video_token(term_id, file_id)
     video_info = get_video_info(file_id, tokens.get('t'), tokens.get('sign'), tokens.get('us'))
-    return get_video_url(video_info, video_index)
+    return get_video_url(video_info, video_index, cid=cid, term_id=term_id)

@@ -1,4 +1,5 @@
 import base64
+import os
 import re
 import sys
 import time
@@ -191,6 +192,7 @@ def get_token_for_key_url(term_id, cid):
     """
     2021-12-19 更新
     'uin=xxx;skey=xxx;pskey=xxx;plskey=xxx;ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid=xxx;term_id=xxx;vod_type=0'
+    uin={0};skey=@J6TNO5W6j;pskey=bKHTqdkkjT-ozPBmqIMO5kkVfRwrgQNpW2*HT5mbKUE_;plskey=000400004ab43917a093411da8cda21ea0fe3fdd3cedfcfbd8cbba67b9cdac17eb240a169fd7c06be73bbd11;ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid=2677129;term_id=102783549;vod_type=0
     :return:
     """
     cookies = Path('cookies.json')
@@ -199,7 +201,7 @@ def get_token_for_key_url(term_id, cid):
         for cookie in cookies:
             if cookie.get('name') == 'p_lskey':
                 plskey = cookie.get('value')
-            if cookie.get('name') == 'ptui_loginuin':
+            if cookie.get('name') == 'clientuin':
                 uin = cookie.get('value')
             if cookie.get('name') == 'skey':
                 skey = cookie.get('value')
@@ -239,3 +241,10 @@ def get_download_urls(term_id, file_id, video_index=-1, cid=None):
     tokens = get_video_token(term_id, file_id)
     video_info = get_video_info(file_id, tokens.get('t'), tokens.get('sign'), tokens.get('us'))
     return get_video_url(video_info, video_index, cid=cid, term_id=term_id)
+
+
+def clear_screen():
+    if sys.platform.startswith('win'):
+        os.system('cls')
+    else:
+        os.system('clear')

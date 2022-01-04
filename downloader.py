@@ -59,24 +59,58 @@ def lg_download(file_url, filename, path, headers=None):
                                                    float(size / content_size * 100)), end='')
 
 
-async def async_download(url, path, filename):
-    client = httpx.AsyncClient()
-    base_file = str(path.joinpath(filename))
+async def async_download(url, path: Path, filename):
+    client = httpx.AsyncClient(timeout=httpx.Timeout(10, connect=5, read=5, write=5, pool=5))
+    filename_ext = filename + '.ts'
+    base_file = path.joinpath(filename_ext)
     size = 0
     async with client.stream('GET', url) as response:
         content_size = int(response.headers['content-length'])
-        with open(base_file+'.ts', 'wb') as file:
+        if base_file.exists():
+            if base_file.stat().st_size == content_size:
+                return
+
+        with open(base_file, 'wb') as file:
+            current_size = 0
             async for chunk in response.aiter_bytes(chunk_size=1024):
                 file.write(chunk)
-                print('\r' + '[下载进度]:%s %.2f%%' % ('▋' * int(size * 50 / content_size),
-                                                   float(size / content_size * 100)), end='')
+                size += len(chunk)
+                if size > current_size:
+                    current_size = max(size, current_size)
+                    print('\r\n' + filename + '[下载进度]:%s %.2f%%' % ('▋' * int(current_size * 50 / content_size),
+                                                              float(current_size / content_size * 100)))
     await client.aclose()
 
 
+def _download(url, path: Path, filename):
+    client = httpx.Client(timeout=httpx.Timeout(10, connect=5, read=5, write=5, pool=5))
+    filename_ext = filename + '.ts'
+    base_file = path.joinpath(filename_ext)
+    size = 0
+    with client.stream('GET', url) as response:
+        content_size = int(response.headers['content-length'])
+        if base_file.exists() and base_file.stat().st_size == content_size:
+            return
+        with open(base_file, 'wb') as file:
+            current_size = 0
+            for chunk in response.iter_bytes():
+                file.write(chunk)
+                size += len(chunk)
+                current_size = size
+                print('\r\n' + filename + '[下载进度]:%s %.2f%%' % ('▋' * int(current_size * 50 / content_size),
+                                                              float(current_size / content_size * 100)), end='')
+
+
 async def download_single(ts_url, key_url, filename, path):
+    print(filename,'开始下载')
     filename = filename.replace('/', '／').replace('\\', '＼')
-    file = path.joinpath(filename)
+    file:Path = path.joinpath(filename)
+    final_video_name = file.name.split('.')[0] + ".mp4"
+    if file.parent.joinpath(final_video_name).exists():
+        print(final_video_name + '已存在！')
+        return
     await async_download(ts_url, path, filename)
+    # _download(ts_url, path, filename)
     download(file_url=key_url, file=file)
     key = get_key(file)
     decrypt_file(str(file) + '.ts', key)

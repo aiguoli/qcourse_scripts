@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from pathlib import Path
 from uuid import uuid1
 
@@ -71,13 +72,14 @@ async def parse_course_url_and_download(video_url, filename=None, path=None):
         await download_single(ts_url=urls[0], key_url=urls[1], filename=filename, path=path)
 
 
-async def download_selected_chapter(term_id, filename, chapter_name, courses):
+async def download_selected_chapter(term_id, filename, chapter_name, courses,cid):
     tasks = []
     for course in courses:
         path = Path('courses', filename, chapter_name)
         course_name = course.get('name')
         file_id = course.get('resid_list')
-        urls = get_download_urls(term_id, file_id)
+        file_id = re.search(r'(\d+)', file_id).group(1)
+        urls = get_download_urls(term_id, file_id, cid=cid)
         tasks.append(asyncio.create_task(download_single(ts_url=urls[0], key_url=urls[1], filename=course_name, path=path)))
     sem = asyncio.Semaphore(3)
     async with sem:
@@ -113,7 +115,7 @@ def main():
         chapter_path = COURSE_DIR.joinpath(course_name, chapter_name)
         if not chapter_path.exists():
             chapter_path.mkdir(parents=True)
-        asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses))
+        asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses,cid))
     elif chosen == 2:
         cid = input('请输入课程cid:')
         course_name = get_course_from_api(cid)
@@ -129,7 +131,7 @@ def main():
             chapter_path = COURSE_DIR.joinpath(course_name, chapter_name)
             if not chapter_path.exists():
                 chapter_path.mkdir(parents=True)
-            asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses))
+            asyncio.run(download_selected_chapter(term_id, course_name, chapter_name, courses, cid))
     else:
         print('请按要求输入！')
 

@@ -32,6 +32,7 @@ linux:
 ##### Tips
 - cid是你登录后url里面的参数，代表course_id
 - 若登录失效，删除`cookies.json`再重新运行脚本
+- 遇到msedgedriver版本不匹配，可在该地址下载最新版的驱动 https://msedgewebdriverstorage.z22.web.core.windows.net/
 ### 功能
 - 模拟登录，获取cookies
 - 下载单个视频

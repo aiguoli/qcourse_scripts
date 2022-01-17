@@ -113,7 +113,7 @@ def run_shell(shell, retry=True, retry_times=3, is_output=True):
 def ts2mp4(file):
     file = Path(file)
     ffmpeg = Path('ffmpeg.exe')
-    basename = file.name.split('.')[0]
+    basename = file.name.split('.ts')[0]
     file_dir = file.parent
     output = file_dir.joinpath(basename)
     cmd = str(ffmpeg) + " -i \"" + str(file) + "\" -c copy \"" + str(output) + "\".mp4"

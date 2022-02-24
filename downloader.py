@@ -43,7 +43,7 @@ def download(file_url, file):
     return 0
 
 
-def progress(percent=0, width=30):
+def progress(percent, width=30):
     left = int(width * percent // 100)
     right = width - left
     print(

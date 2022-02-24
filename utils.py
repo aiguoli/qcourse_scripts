@@ -12,7 +12,7 @@ from urllib.parse import urlencode, urlparse, parse_qs
 
 
 class API:
-    ItemsUri = "https://ke.qq.com/cgi-bin/course/get_terms_detail?"
+    ItemsUri = "https://ke.qq.com/cgi-bin/course/get_terms_detail"
     TokenUri = "https://ke.qq.com/cgi-bin/qcloud/get_token"
     MediaUri = "https://playvideo.qcloud.com/getplayinfo/v2/1258712167/"
     InfoUri = "https://ke.qq.com/cgi-bin/identity/info?"
@@ -26,12 +26,14 @@ class API:
     Check = "https://ssl.ptlogin2.qq.com/check?"
 
 
+DEFAULT_HEADERS = {"referer": "https://ke.qq.com/webcourse/"}
+
+
 def get_course_from_api(cid):
     # 获取课程信息
     # url = "https://ke.qq.com/cgi-bin/course/basic_info?cid=" + str(cid)
     url = API.BasicInfoUri.format(cid=cid)
-
-    response = requests.get(url).json()
+    response = requests.get(url, headers=DEFAULT_HEADERS).json()
     name = (
         response.get("result")
         .get("course_detail")
@@ -40,19 +42,14 @@ def get_course_from_api(cid):
         .replace("\\", "＼")
     )
     with open(name + ".json", "w") as f:
-        json.dump(response, f)
+        json.dump(response, f, ensure_ascii=False, indent=4)
     return name
 
 
 def get_terms_from_api(cid, term_id_list):
     # term_id_list是一个数组，里面是整数格式的term_id
-    url = "https://ke.qq.com/cgi-bin/course/get_terms_detail"
-    referer = "https://ke.qq.com/webcourse/{cid}/{term_id}".format(
-        cid=cid, term_id=term_id_list[0]
-    )
     params = {"cid": cid, "term_id_list": term_id_list}
-    headers = {"referer": referer}
-    response = requests.get(url, params=urlencode(params), headers=headers).json()
+    response = requests.get(API.ItemsUri, params=params, headers=DEFAULT_HEADERS).json()
     return response
 
 
@@ -192,7 +189,7 @@ def parse_video_url(video_url):
 
 def parse_cid_url(video_url):
     pattern = re.compile("https://ke.qq.com/webcourse/(.*)/")
-    return pattern.findall(video_url)
+    return pattern.findall(video_url)[0]
 
 
 def get_video_token(term_id, file_id):
@@ -250,8 +247,9 @@ def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
     接收来自get_video_info函数返回的视频信息
     根据video_index返回不同清晰度的视频ts下载链接
     """
-    video = video_info.get("videoInfo").get("transcodeList")[video_index]
+    video = video_info.get("videoInfo").get("transcodeList", None)
     if video:
+        video = video[video_index]
         video_url = video.get("url").replace(".m3u8", ".ts")
         key_url = (
             get_key_url_from_m3u8(video.get("url"))
@@ -259,6 +257,7 @@ def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
             + get_token_for_key_url(term_id=term_id, cid=cid)
         )
         return video_url, key_url
+    return video_info.get("videoInfo").get("sourceVideo").get("url"), None
 
 
 def get_key_url_from_m3u8(m3u8_url):

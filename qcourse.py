@@ -19,7 +19,7 @@ from utils import (
     get_chapters_from_file,
 )
 from downloader import download_single
-
+from downloader_m3u8 import download_m3u8_raw as m3u8_down
 
 BASE_DIR = Path()
 COURSE_DIR = BASE_DIR.joinpath("courses")
@@ -78,11 +78,10 @@ async def parse_course_url_and_download(video_url, filename=None, path=None):
     if not filename:
         filename = str(uuid1())
     urls = get_download_url_from_course_url(video_url, -1)
-    print(urls)
-    if urls:
-        await download_single(
-            ts_url=urls[0], key_url=urls[1], filename=filename, path=path
-        )
+    if urls[1]:
+        await download_single(urls[0], urls[1], filename, path)
+    else:
+        m3u8_down(urls[0], path, filename, True)
 
 
 async def download_selected_chapter(term_id, filename, chapter_name, courses, cid):
@@ -123,8 +122,8 @@ def main():
         cid = input("请输入课程cid:")
         course_name = get_course_from_api(cid)
         print("获取课程信息成功")
-
-        term_index, term_id, term = choose_term(course_name + ".json")
+        info_file = Path(course_name + ".json")
+        term_index, term_id, term = choose_term(info_file)
         chapter = choose_chapter(term)
         chapter_name = chapter.get("name").replace("/", "／").replace("\\", "＼")
         courses = get_courses_from_chapter(chapter)

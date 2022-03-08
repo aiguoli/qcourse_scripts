@@ -229,7 +229,8 @@ def get_token_for_key_url(term_id, cid):
         for cookie in cookies:
             if cookie.get('name') == 'p_lskey':
                 plskey = cookie.get('value')
-            if cookie.get('name') == 'clientuin':
+            if cookie.get('name') == 'ptui_loginuin':
+                # 如果QQ登陆的话，这个就是你的QQ，有多个值，暂时通过ptui_loginuin获取
                 uin = cookie.get('value')
             if cookie.get('name') == 'skey':
                 skey = cookie.get('value')

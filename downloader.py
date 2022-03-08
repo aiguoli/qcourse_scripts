@@ -42,10 +42,11 @@ def download(file_url, file):
     return 0
 
 
-def progress(percent, width=30):
+def progress(percent, width=30, filename=None):
     left = int(width * percent // 100)
     right = width - left
     print(
+        filename,
         '\r[',
         '■' * left,
         ' ' * right,
@@ -78,7 +79,7 @@ def lg_download(file_url, filename, path, headers=None):
                 f.write(data)
                 size += len(data)
                 if datetime.datetime.now() - last_show_time > delta_time:
-                    progress(size / content_size * 100)
+                    progress(size / content_size * 100, filename=filename)
                     last_show_time = datetime.datetime.now()
 
 
@@ -105,7 +106,7 @@ async def async_download(url, path: Path, filename):
                 if size > current_size:
                     current_size = max(size, current_size)
                 if datetime.datetime.now() - last_show_time > delta_time:
-                    progress(size / content_size * 100)
+                    progress(size / content_size * 100, filename=filename)
                     last_show_time = datetime.datetime.now()
 
     await client.aclose()
@@ -129,7 +130,7 @@ def _download(url, path: Path, filename):
                 size += len(chunk)
                 current_size = size
                 if datetime.datetime.now() - last_show_time > delta_time:
-                    progress(current_size / content_size * 100)
+                    progress(current_size / content_size * 100, filename=filename)
                     last_show_time = datetime.datetime.now()
 
 

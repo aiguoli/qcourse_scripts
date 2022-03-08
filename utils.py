@@ -117,26 +117,21 @@ def print_menu(menu):
         print(str(menu.index(item)) + '. ' + item)
 
 
-def run_shell(shell, retry=True, retry_times=3, is_output=True):
+def run_shell(shell, retry=True, retry_times=3):
     cmd = subprocess.Popen(
         shell,
-        stdin=subprocess.PIPE,
-        stderr=sys.stderr,
         close_fds=True,
-        stdout=sys.stdout,
-        universal_newlines=True,
         shell=True,
         bufsize=1,
+        stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
     )
 
-    print(shell)
-    if is_output:
-        cmd.communicate()
     if retry and cmd.returncode != 0:
         time.sleep(1)
         if retry_times > 0:
             return run_shell(shell, retry=True, retry_times=retry_times - 1)
-        raise RuntimeError(f'{shell} 执行失败，异常退出')
+        print('\nShell出现异常，请自行查看课程文件是否转码成功')
     return cmd.returncode
 
 
@@ -146,8 +141,8 @@ def ts2mp4(file):
     basename = file.name.split('.ts')[0]
     file_dir = file.parent
     output = file_dir.joinpath(basename)
-    cmd = str(ffmpeg) + ' -i '' + str(file) + '' -c copy '' + str(output) + ''.mp4'
-    run_shell(cmd, retry_times=False, is_output=False)
+    cmd = str(ffmpeg) + ' -i "' + str(file) + '" -c copy "' + str(output) + '".mp4'
+    run_shell(cmd, retry_times=False)
     file.unlink()
 
 

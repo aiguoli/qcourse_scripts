@@ -10,6 +10,8 @@ import json
 import subprocess
 from urllib.parse import urlparse, parse_qs
 
+from logger import logger
+
 
 class API:
     ItemsUri = 'https://ke.qq.com/cgi-bin/course/get_terms_detail'
@@ -142,6 +144,7 @@ def ts2mp4(file):
     file_dir = file.parent
     output = file_dir.joinpath(basename)
     cmd = str(ffmpeg) + ' -i "' + str(file) + '" -c copy "' + str(output) + '".mp4'
+    # 这个命令会报错，但是我不熟悉ffmpeg，而且似乎输出视频没有毛病，所以屏蔽了错误输出
     run_shell(cmd, retry_times=False)
     file.unlink()
 
@@ -221,20 +224,23 @@ def get_token_for_key_url(term_id, cid):
     cookies = Path('cookies.json')
     if cookies.exists():
         cookies = json.loads(cookies.read_bytes())
+        uin = skey = pskey = plskey = None
         for cookie in cookies:
             if cookie.get('name') == 'p_lskey':
                 plskey = cookie.get('value')
-            if cookie.get('name') == 'ptui_loginuin':
-                # 如果QQ登陆的话，这个就是你的QQ，有多个值，暂时通过ptui_loginuin获取
-                uin = cookie.get('value')
             if cookie.get('name') == 'skey':
                 skey = cookie.get('value')
             if cookie.get('name') == 'p_skey':
                 pskey = cookie.get('value')
+            if cookie.get('name') == 'clientuin' or cookie.get('name') == 'ptui_loginuin':
+                uin = cookie.get('value')
+        if uin is None:
+            uin = input('无法获取到uin，请输入你的QQ：')
 
         str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid={cid};term_id={term_id};vod_type=0'.format(
             uin=uin, skey=skey, pskey=pskey, plskey=plskey, cid=cid, term_id=term_id
         )
+        logger.info('p_lskey: {}, ptui_loginuin: {}, skey: {}, p_skey: {}'.format(plskey, uin, skey, pskey))
         return base64.b64encode(str_token.encode()).decode()[:-2]
 
 

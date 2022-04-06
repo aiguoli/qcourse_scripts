@@ -5,6 +5,7 @@ import datetime
 from Crypto.Cipher import AES
 import httpx
 
+from logger import logger
 from utils import ts2mp4
 
 
@@ -108,7 +109,7 @@ async def async_download(url, path: Path, filename):
                 if datetime.datetime.now() - last_show_time > delta_time:
                     progress(size / content_size * 100, filename=filename)
                     last_show_time = datetime.datetime.now()
-
+    logger.info('Download '+filename)
     await client.aclose()
 
 

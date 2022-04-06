@@ -3,9 +3,9 @@ import json
 import re
 from pathlib import Path
 from uuid import uuid1
-
 from playwright.sync_api import sync_playwright
 
+from logger import logger
 from utils import (
     print_menu,
     get_course_from_api,
@@ -115,6 +115,7 @@ def main():
     # =========================================
     if chosen == 0:
         course_url = input('输入课程链接：')
+        logger.info('URL: '+course_url)
         asyncio.run(parse_course_url_and_download(course_url))
     elif chosen == 1:
         cid = input('请输入课程cid:')
@@ -125,6 +126,7 @@ def main():
         chapter = choose_chapter(term)
         chapter_name = chapter.get('name').replace('/', '／').replace('\\', '＼')
         courses = get_courses_from_chapter(chapter)
+        logger.info('cid: {}，name: {}, term: {}, chapter: {}'.format(cid, course_name, term_id, chapter_name))
         print('即将开始下载章节：' + chapter_name)
         print('=' * 20)
 
@@ -139,6 +141,7 @@ def main():
         course_name = get_course_from_api(cid)
         term_index, term_id, term = choose_term(course_name + '.json')
         print('获取课程信息成功,准备下载！')
+        logger.info('cid: '+cid)
         chapters = get_chapters_from_file(course_name + '.json', term_index)
         for chapter in chapters:
             chapter_name = chapter.get('name').replace('/', '／').replace('\\', '＼')

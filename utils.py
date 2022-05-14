@@ -29,6 +29,7 @@ class API:
 
 
 DEFAULT_HEADERS = {'referer': 'https://ke.qq.com/webcourse/'}
+CURRENT_USER = {}
 
 
 def get_course_from_api(cid):
@@ -38,10 +39,10 @@ def get_course_from_api(cid):
     response = requests.get(url, headers=DEFAULT_HEADERS).json()
     name = (
         response.get('result')
-        .get('course_detail')
-        .get('name')
-        .replace('/', '／')
-        .replace('\\', '＼')
+            .get('course_detail')
+            .get('name')
+            .replace('/', '／')
+            .replace('\\', '＼')
     )
     with open(name + '.json', 'w') as f:
         json.dump(response, f, ensure_ascii=False, indent=4)
@@ -72,10 +73,10 @@ def get_chapters_from_file(filename, term_index):
         course_info = json.loads(f.read())
     chapters = (
         course_info.get('result')
-        .get('course_detail')
-        .get('terms')[term_index]
-        .get('chapter_info')[0]
-        .get('sub_info')
+            .get('course_detail')
+            .get('terms')[term_index]
+            .get('chapter_info')[0]
+            .get('sub_info')
     )
     return chapters
 
@@ -214,34 +215,40 @@ def get_video_info(file_id, t, sign, us):
 
 def get_token_for_key_url(term_id, cid):
     """
-    这个key_url后面要接一个操蛋的token，研究发现，token是如下结构base64加密后得到的
+    这个key_url后面要接一个token，研究发现，token是如下结构base64加密后得到的
     其中的plskey是要填的，这个东西来自登陆时的token去掉结尾的两个'='，也可以在cookies.json里获取
-
-    2021-12-19 更新
-    'uin=xxx;skey=xxx;pskey=xxx;plskey=xxx;ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid=xxx;term_id=xxx;vod_type=0'
-    uin={0};skey=@J6TNO5W6j;pskey=bKHTqdkkjT-ozPBmqIMO5kkVfRwrgQNpW2*HT5mbKUE_;plskey=000400004ab43917a093411da8cda21ea0fe3fdd3cedfcfbd8cbba67b9cdac17eb240a169fd7c06be73bbd11;ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid=2677129;term_id=102783549;vod_type=0
     """
-    cookies = Path('cookies.json')
-    if cookies.exists():
-        cookies = json.loads(cookies.read_bytes())
-        uin = skey = pskey = plskey = None
-        for cookie in cookies:
-            if cookie.get('name') == 'p_lskey':
-                plskey = cookie.get('value')
-            if cookie.get('name') == 'skey':
-                skey = cookie.get('value')
-            if cookie.get('name') == 'p_skey':
-                pskey = cookie.get('value')
-            if cookie.get('name') == 'clientuin' or cookie.get('name') == 'ptui_loginuin':
-                uin = cookie.get('value')
-        if uin is None:
-            uin = input('无法获取到uin，请输入你的QQ：')
-
-        str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;uid_origin_uid_type=0;uid_origin_auth_type=0;cid={cid};term_id={term_id};vod_type=0'.format(
-            uin=uin, skey=skey, pskey=pskey, plskey=plskey, cid=cid, term_id=term_id
-        )
-        logger.info('p_lskey: {}, ptui_loginuin: {}, skey: {}, p_skey: {}'.format(plskey, uin, skey, pskey))
-        return base64.b64encode(str_token.encode()).decode()[:-2]
+    if not CURRENT_USER:
+        cookies = Path('cookies.json')
+        if cookies.exists():
+            cookies = json.loads(cookies.read_bytes())
+            uin = skey = pskey = plskey = None
+            for cookie in cookies:
+                if cookie.get('name') == 'p_lskey':
+                    plskey = cookie.get('value')
+                    CURRENT_USER['p_lskey'] = plskey
+                if cookie.get('name') == 'skey':
+                    skey = cookie.get('value')
+                    CURRENT_USER['skey'] = skey
+                if cookie.get('name') == 'p_skey':
+                    pskey = cookie.get('value')
+                    CURRENT_USER['pskey'] = pskey
+                if cookie.get('name') == 'clientuin' or cookie.get('name') == 'ptui_loginuin':
+                    uin = cookie.get('value')
+                    CURRENT_USER['uin'] = uin
+            if uin is None:
+                uin = input('无法获取到uin，请输入你的QQ：')
+                CURRENT_USER['uin'] = uin
+    # 直接从CURRENT_USER里读取参数
+    plskey = CURRENT_USER['p_lskey']
+    skey = CURRENT_USER['skey']
+    pskey = CURRENT_USER['pskey']
+    uin = CURRENT_USER['uin']
+    str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;uid_origin_uid_type=0;' \
+                'uid_origin_auth_type=0;cid={cid};term_id={term_id};vod_type=0'\
+        .format(uin=uin, skey=skey, pskey=pskey,plskey=plskey, cid=cid, term_id=term_id)
+    logger.info('p_lskey: {}, ptui_loginuin: {}, skey: {}, p_skey: {}'.format(plskey, uin, skey, pskey))
+    return base64.b64encode(str_token.encode()).decode()[:-2]
 
 
 def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
@@ -254,9 +261,9 @@ def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
         video = video[video_index]
         video_url = video.get('url').replace('.m3u8', '.ts')
         key_url = (
-            get_key_url_from_m3u8(video.get('url'))
-            + '&token='
-            + get_token_for_key_url(term_id=term_id, cid=cid)
+                get_key_url_from_m3u8(video.get('url'))
+                + '&token='
+                + get_token_for_key_url(term_id=term_id, cid=cid)
         )
         return video_url, key_url
     return video_info.get('videoInfo').get('sourceVideo').get('url'), None

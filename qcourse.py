@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid1
 from playwright.sync_api import sync_playwright
 
+import utils
 from logger import logger
 from utils import (
     print_menu,
@@ -118,7 +119,7 @@ def main():
         logger.info('URL: '+course_url)
         asyncio.run(parse_course_url_and_download(course_url))
     elif chosen == 1:
-        cid = input('请输入课程cid:')
+        cid = utils.choose_course()
         course_name = get_course_from_api(cid)
         print('获取课程信息成功')
         info_file = Path(course_name + '.json')
@@ -137,7 +138,7 @@ def main():
             download_selected_chapter(term_id, course_name, chapter_name, courses, cid)
         )
     elif chosen == 2:
-        cid = input('请输入课程cid:')
+        cid = utils.choose_course()
         course_name = get_course_from_api(cid)
         term_index, term_id, term = choose_term(course_name + '.json')
         print('获取课程信息成功,准备下载！')

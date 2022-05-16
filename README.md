@@ -5,7 +5,7 @@
 
 里面可能还有bug，欢迎斧正。
 
-> 2022.5.15测试可用
+> 2022.5.16测试可用
 
 ### 使用方法
 下载代码并解压，确保你安装了python，版本>=3.5
@@ -30,7 +30,7 @@ linux:
 - `python` -> `python3`
 - `pip` -> `pip3`
 ##### Tips
-- cid是你登录后url里面的参数，代表course_id
+~- cid是你登录后url里面的参数，代表course_id~
 - 若登录失效，删除`cookies.json`再重新运行脚本
 - 遇到msedgedriver版本不匹配，可在该地址下载最新版的驱动 https://msedgewebdriverstorage.z22.web.core.windows.net/
 ### 功能

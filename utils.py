@@ -26,6 +26,7 @@ class API:
     PtQrShow = 'https://ssl.ptlogin2.qq.com/ptqrshow?'
     PtQrLogin = 'https://ssl.ptlogin2.qq.com/ptqrlogin?'
     Check = 'https://ssl.ptlogin2.qq.com/check?'
+    CourseList = 'https://ke.qq.com/cgi-proxy/user/user_center/get_plan_list'
 
 
 DEFAULT_HEADERS = {'referer': 'https://ke.qq.com/webcourse/'}
@@ -87,6 +88,44 @@ def get_chapters(term):
 
 def get_courses_from_chapter(chapter):
     return chapter.get('task_info')
+
+
+def get_all_courses():
+    # 下个版本加入该函数，用于获取用户计划内的课程，在脚本运行时不用输入cid了
+    # count参数最多为10，返回response中end代表有没有下一页
+    # 考虑到课程一般不会有几百个，所以不做分页处理
+    def _load_res(r):
+        if r:
+            for i in r.get('map_list'):
+                for j in i.get('map_courses'):
+                    res.append({
+                        'name': j.get('cname'),
+                        'cid': j.get('cid')
+                    })
+    res = []
+    page = 1
+    response = requests.get(API.CourseList,
+                            params={'page': page, 'count': '10'},
+                            headers=DEFAULT_HEADERS,
+                            cookies=load_json_cookies()).json().get('result')
+    _load_res(response)
+    while response.get('end') == 0:
+        page += 1
+        response = requests.get(API.CourseList,
+                                params={'page': page, 'count': '10'},
+                                headers=DEFAULT_HEADERS,
+                                cookies=load_json_cookies()).json().get('result')
+        _load_res(response)
+    return res
+
+
+def choose_course():
+    courses = get_all_courses()
+    print('你的账号里有如下课程：')
+    for course in courses:
+        print(str(courses.index(course)) + '. ' + course.get('name'))
+    cid = courses[int(input('请输入要下载的课程序号(回车结束)：'))].get('cid')
+    return cid
 
 
 def get_course_url(course):
@@ -233,13 +272,16 @@ def get_token_for_key_url(term_id, cid):
                 if cookie.get('name') == 'p_skey':
                     pskey = cookie.get('value')
                     CURRENT_USER['pskey'] = pskey
-                if cookie.get('name') == 'clientuin' or cookie.get('name') == 'ptui_loginuin':
+                if cookie.get('name') == 'clientuin' \
+                        or cookie.get('name') == 'ptui_loginuin' \
+                        or cookie.get('name') == 'uid_uin':
                     uin = cookie.get('value')
                     CURRENT_USER['uin'] = uin
             if uin is None:
-                uin = input('无法获取到uin，请输入你的QQ：')
+                uin = input('无法获取到uin，请输入你的QQ/微信uin：')
                 CURRENT_USER['uin'] = uin
     # 直接从CURRENT_USER里读取参数
+    logger.info(CURRENT_USER)
     plskey = CURRENT_USER['p_lskey']
     skey = CURRENT_USER['skey']
     pskey = CURRENT_USER['pskey']
@@ -299,3 +341,9 @@ def clear_screen():
         os.system('cls')
     else:
         os.system('clear')
+
+
+
+if __name__ == '__main__':
+    a = get_all_courses()
+    print(a)

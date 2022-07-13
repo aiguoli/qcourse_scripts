@@ -1,6 +1,8 @@
 import base64
+import json
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -9,6 +11,7 @@ import requests
 import json
 import subprocess
 from urllib.parse import urlparse, parse_qs
+from urllib.request import getproxies
 
 from logger import logger
 
@@ -27,17 +30,20 @@ class API:
     PtQrLogin = 'https://ssl.ptlogin2.qq.com/ptqrlogin?'
     Check = 'https://ssl.ptlogin2.qq.com/check?'
     CourseList = 'https://ke.qq.com/cgi-proxy/user/user_center/get_plan_list'
+    VideoRec = 'https://ke.qq.com/cgi-proxy/rec_video/describe_rec_video'
+    DefaultAccount = 'https://ke.qq.com/cgi-proxy/accbind/get_default_account'
 
 
 DEFAULT_HEADERS = {'referer': 'https://ke.qq.com/webcourse/'}
 CURRENT_USER = {}
+PROXIES = getproxies()  # 当你使用魔法，避免出现check_hostname requires server_hostname
 
 
 def get_course_from_api(cid):
     # 获取课程信息
     # url = 'https://ke.qq.com/cgi-bin/course/basic_info?cid=' + str(cid)
     url = API.BasicInfoUri.format(cid=cid)
-    response = requests.get(url, headers=DEFAULT_HEADERS).json()
+    response = requests.get(url, headers=DEFAULT_HEADERS, proxies=PROXIES).json()
     name = (
         response.get('result')
             .get('course_detail')
@@ -53,7 +59,7 @@ def get_course_from_api(cid):
 def get_terms_from_api(cid, term_id_list):
     # term_id_list是一个数组，里面是整数格式的term_id
     params = {'cid': cid, 'term_id_list': term_id_list}
-    response = requests.get(API.ItemsUri, params=params, headers=DEFAULT_HEADERS).json()
+    response = requests.get(API.ItemsUri, params=params, headers=DEFAULT_HEADERS, proxies=PROXIES).json()
     return response
 
 
@@ -107,14 +113,16 @@ def get_all_courses():
     response = requests.get(API.CourseList,
                             params={'page': page, 'count': '10'},
                             headers=DEFAULT_HEADERS,
-                            cookies=load_json_cookies()).json().get('result')
+                            cookies=load_json_cookies(),
+                            proxies=PROXIES).json().get('result')
     _load_res(response)
     while response.get('end') == 0:
         page += 1
         response = requests.get(API.CourseList,
                                 params={'page': page, 'count': '10'},
                                 headers=DEFAULT_HEADERS,
-                                cookies=load_json_cookies()).json().get('result')
+                                cookies=load_json_cookies(),
+                                proxies=PROXIES).json().get('result')
         _load_res(response)
     return res
 
@@ -231,10 +239,10 @@ def parse_cid_url(video_url):
 
 
 def get_video_token(term_id, file_id):
-    '''获得sign, t, us这三个参数 这三个参数用来获取视频m3u8'''
+    # 获得sign, t, us这三个参数 这三个参数用来获取视频m3u8
     params = {'term_id': term_id, 'fileId': file_id}
     response = requests.get(
-        API.TokenUri, params=params, cookies=load_json_cookies()
+        API.TokenUri, params=params, cookies=load_json_cookies(), proxies=PROXIES
     ).json()
     return response.get('result')
 
@@ -248,7 +256,7 @@ def get_video_info(file_id, t, sign, us):
     """
     url = API.MediaUri + str(file_id)
     params = {'t': t, 'sign': sign, 'us': us, 'exper': 0}
-    response = requests.get(url, params=params, cookies=load_json_cookies()).json()
+    response = requests.get(url, params=params, cookies=load_json_cookies(), proxies=PROXIES).json()
     return response
 
 
@@ -261,36 +269,49 @@ def get_token_for_key_url(term_id, cid):
         cookies = Path('cookies.json')
         if cookies.exists():
             cookies = json.loads(cookies.read_bytes())
-            uin = skey = pskey = plskey = None
-            for cookie in cookies:
-                if cookie.get('name') == 'p_lskey':
-                    plskey = cookie.get('value')
-                    CURRENT_USER['p_lskey'] = plskey
-                if cookie.get('name') == 'skey':
-                    skey = cookie.get('value')
-                    CURRENT_USER['skey'] = skey
-                if cookie.get('name') == 'p_skey':
-                    pskey = cookie.get('value')
-                    CURRENT_USER['pskey'] = pskey
-                if cookie.get('name') == 'clientuin' \
-                        or cookie.get('name') == 'ptui_loginuin' \
-                        or cookie.get('name') == 'uid_uin':
-                    uin = cookie.get('value')
-                    CURRENT_USER['uin'] = uin
-            if uin is None:
-                uin = input('无法获取到uin，请输入你的QQ/微信uin：')
-                CURRENT_USER['uin'] = uin
+            uin = get_uin()
+            CURRENT_USER['uin'] = uin
+            if len(CURRENT_USER.get('uin')) > 10:
+                # 微信
+                for cookie in cookies:
+                    if cookie.get('name') == 'uid_a2':
+                        CURRENT_USER['ext'] = cookie.get('value')
+                    if cookie.get('name') == 'uid_appid':
+                        CURRENT_USER['appid'] = cookie.get('value')
+                    if cookie.get('name') == 'uid_type':
+                        CURRENT_USER['uid_type'] = cookie.get('value')
+                str_token = 'uin={uin};skey=;pskey=;plskey=;ext={uid_a2};uid_appid={appid};' \
+                            'uid_type={uid_type};uid_origin_uid_type=2;uid_origin_auth_type=2;' \
+                            'cid={cid};term_id={term_id};vod_type=0;platform=3'\
+                    .format(uin=uin,
+                            uid_a2=CURRENT_USER.get('ext'),
+                            appid=CURRENT_USER.get('appid'),
+                            uid_type=CURRENT_USER.get('uid_type'),
+                            cid=cid,
+                            term_id=term_id)
+            else:
+                skey = pskey = plskey = None
+                for cookie in cookies:
+                    if cookie.get('name') == 'p_lskey':
+                        CURRENT_USER['p_lskey'] = plskey
+                    if cookie.get('name') == 'skey':
+                        CURRENT_USER['skey'] = skey
+                    if cookie.get('name') == 'p_skey':
+                        CURRENT_USER['pskey'] = pskey
+                str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;' \
+                            'uid_origin_uid_type=0;uid_origin_auth_type=0;cid={cid};term_id={term_id};' \
+                            'vod_type=0'\
+                    .format(uin=uin,
+                            skey=CURRENT_USER.get('skey'),
+                            pskey=CURRENT_USER.get('pskey'),
+                            plskey=CURRENT_USER.get('plskey'),
+                            cid=cid,
+                            term_id=term_id)
+            CURRENT_USER['token'] = str_token
+
     # 直接从CURRENT_USER里读取参数
     logger.info(CURRENT_USER)
-    plskey = CURRENT_USER['p_lskey']
-    skey = CURRENT_USER['skey']
-    pskey = CURRENT_USER['pskey']
-    uin = CURRENT_USER['uin']
-    str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;uid_origin_uid_type=0;' \
-                'uid_origin_auth_type=0;cid={cid};term_id={term_id};vod_type=0'\
-        .format(uin=uin, skey=skey, pskey=pskey,plskey=plskey, cid=cid, term_id=term_id)
-    logger.info('p_lskey: {}, ptui_loginuin: {}, skey: {}, p_skey: {}'.format(plskey, uin, skey, pskey))
-    return base64.b64encode(str_token.encode()).decode()[:-2]
+    return base64.b64encode(CURRENT_USER.get('token').encode()).decode()[:-2]
 
 
 def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
@@ -313,7 +334,7 @@ def get_video_url(video_info, video_index=-1, cid=None, term_id=None):
 
 def get_key_url_from_m3u8(m3u8_url):
     # 传入带sign, t, us参数的m3u8下载链接
-    m3u8_text = requests.get(m3u8_url).text
+    m3u8_text = requests.get(m3u8_url, proxies=PROXIES).text
     pattern = re.compile(r'(https://ke.qq.com/cgi-bin/qcloud/get_dk.+)"')
     return pattern.findall(m3u8_text)[0]
 
@@ -343,7 +364,35 @@ def clear_screen():
         os.system('clear')
 
 
+def get_video_rec(cid, file_id, term_id, video_index=0):
+    # 腾讯课堂现在强制绑定手机号，看样子是更新了
+    # 新发现的接口，疑似wechat / qq通用，无需cookie，只要uin
+    # 返回dk( ts文件密匙 )，视频文件链接，时长，生存时间，字幕等信息
+    # 这里返回的rec_video_info.info里面含有不同清晰度的视频文件，越清晰的排序越靠前
+    params = {
+        'course_id': cid,
+        'file_id': file_id,
+        'term_id': term_id,
+        'header': '{{"srv_appid":201,"cli_appid":"ke","uin":"{}","cli_info":{{"cli_platform":3}}}}'.format(get_uin())
+    }
+    response = requests.get(API.VideoRec, headers=DEFAULT_HEADERS, params=params, proxies=PROXIES).json()
+    if response:
+        info = response.get('result').get('rec_video_info')
+        ts_url = info.get('infos')[video_index].get('url').replace('.m3u8', '.ts')
+        key = info.get('dk')
+        return ts_url, key
+
+
+def get_uin():
+    response = requests.get(API.DefaultAccount,
+                            cookies=load_json_cookies(),
+                            headers=DEFAULT_HEADERS,
+                            proxies=PROXIES).json()
+    if response.get('retcode') == 0:
+        return response.get('result').get('tiny_id')
+    return input('请输入你的QQ号 / 微信uin(回车结束)：')
+
 
 if __name__ == '__main__':
-    a = get_all_courses()
+    a = get_video_rec('441646', '5285890817060621573', '100527595')
     print(a)

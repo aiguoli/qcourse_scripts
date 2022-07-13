@@ -3,7 +3,7 @@
 
 项目中可能还有bug，欢迎斧正。
 
-> 2022.5.16测试可用
+> 2022.7.13测试可用
 
 ### 使用方法
 下载代码并解压，确保你安装了python，版本>=3.5
@@ -32,7 +32,7 @@ linux:
 - 若登录失效，删除`cookies.json`再重新运行脚本
 - 遇到msedgedriver版本不匹配，可在该地址下载最新版的驱动 https://msedgewebdriverstorage.z22.web.core.windows.net/
 ### 功能
-- 模拟登录，获取cookies
+- 模拟登录，支持QQ / 微信，获取cookies
 - 下载单个视频
 - 按章节下载
 - 下载整个课程

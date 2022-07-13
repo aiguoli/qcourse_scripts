@@ -16,6 +16,7 @@ from utils import (
     choose_chapter,
     get_courses_from_chapter,
     get_chapters_from_file,
+    get_video_rec,
 )
 from downloader import download_single
 from downloader_m3u8 import download_m3u8_raw as m3u8_down
@@ -104,12 +105,12 @@ async def download_selected_chapter(term_id, filename, chapter_name, courses, ci
 
 
 def main():
-    menu = ['下载单个视频', '下载课程指定章节', '下载课程全部视频']
+    menu = ['下载单个视频', '下载课程指定章节', '下载课程全部视频', '退出登录']
     print_menu(menu)
     chosen = int(input('\n输入需要的功能：'))
     # ================大佬看这里================
     # 只有这一个地方用到了playwright，用来模拟登录
-    # 实在不想再抓包了，等一个大佬去掉playwright依赖，改成输入账户密码
+    # 实在不想再抓包了，等一个大佬去掉playwright依赖，改成输入账户密码，或者获取登录二维码也行
     qq_course = QCourse()
     qq_course.login()
     qq_course.close()
@@ -158,6 +159,8 @@ def main():
                     term_id, course_name, chapter_name, courses, cid
                 )
             )
+    elif chosen == 3:
+        QCourse.clear_cookies()
     else:
         print('请按要求输入！')
 

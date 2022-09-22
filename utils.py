@@ -7,7 +7,9 @@ import sys
 import time
 from pathlib import Path
 
+import browser_cookie3
 import requests
+from requests.utils import dict_from_cookiejar, cookiejar_from_dict
 import json
 import subprocess
 from urllib.parse import urlparse, parse_qs
@@ -220,10 +222,7 @@ def choose_chapter(term):
 def load_json_cookies():
     cookies = Path('cookies.json')
     if cookies.exists():
-        res = {}
-        for i in json.loads(cookies.read_bytes()):
-            res.update({i['name']: i['value']})
-        return res
+        return cookiejar_from_dict(json.loads(cookies.read_bytes()))
 
 
 def parse_video_url(video_url):
@@ -273,13 +272,9 @@ def get_token_for_key_url(term_id, cid):
             CURRENT_USER['uin'] = uin
             if len(CURRENT_USER.get('uin')) > 10:
                 # 微信
-                for cookie in cookies:
-                    if cookie.get('name') == 'uid_a2':
-                        CURRENT_USER['ext'] = cookie.get('value')
-                    if cookie.get('name') == 'uid_appid':
-                        CURRENT_USER['appid'] = cookie.get('value')
-                    if cookie.get('name') == 'uid_type':
-                        CURRENT_USER['uid_type'] = cookie.get('value')
+                CURRENT_USER['ext'] = cookies.get('uid_a2')
+                CURRENT_USER['appid'] = cookies.get('uid_appid')
+                CURRENT_USER['uid_type'] = cookies.get('uid_type')
                 str_token = 'uin={uin};skey=;pskey=;plskey=;ext={uid_a2};uid_appid={appid};' \
                             'uid_type={uid_type};uid_origin_uid_type=2;uid_origin_auth_type=2;' \
                             'cid={cid};term_id={term_id};vod_type=0;platform=3'\
@@ -291,13 +286,9 @@ def get_token_for_key_url(term_id, cid):
                             term_id=term_id)
             else:
                 skey = pskey = plskey = None
-                for cookie in cookies:
-                    if cookie.get('name') == 'p_lskey':
-                        CURRENT_USER['p_lskey'] = plskey
-                    if cookie.get('name') == 'skey':
-                        CURRENT_USER['skey'] = skey
-                    if cookie.get('name') == 'p_skey':
-                        CURRENT_USER['pskey'] = pskey
+                CURRENT_USER['p_lskey'] = cookies.get('p_lskey')
+                CURRENT_USER['skey'] = cookies.get('skey')
+                CURRENT_USER['pskey'] = cookies.get('p_skey')
                 str_token = 'uin={uin};skey={skey};pskey={pskey};plskey={plskey};ext=;uid_type=0;' \
                             'uid_origin_uid_type=0;uid_origin_auth_type=0;cid={cid};term_id={term_id};' \
                             'vod_type=0'\
@@ -392,7 +383,3 @@ def get_uin():
         return response.get('result').get('tiny_id')
     return input('请输入你的QQ号 / 微信uin(回车结束)：')
 
-
-if __name__ == '__main__':
-    a = get_video_rec('441646', '5285890817060621573', '100527595')
-    print(a)

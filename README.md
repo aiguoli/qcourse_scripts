@@ -3,13 +3,13 @@
 
 项目中可能还有bug，欢迎斧正。
 
-> 2022.7.13测试可用
+> 2022.9.22测试可用
 
 ### 使用方法
 下载代码并解压，确保你安装了python，版本>=3.5
 
 windows：
-依次运行下面的命令(保姆级教程)
+首先用`EDGE`浏览器( **不要开无痕** )打开[腾讯课堂](https://ke.qq.com)，用任意方式登录，然后依次运行下面的命令(保姆级教程)
 ``` shell
 cd qcourse_scripts
 
@@ -19,8 +19,6 @@ qcourse-venv\scripts\activate
 
 pip install -Ur requirements.txt
 
-playwright install msedge
-
 python qcourse.py
 ```
 
@@ -28,9 +26,7 @@ linux:
 - `python` -> `python3`
 - `pip` -> `pip3`
 ##### Tips
-~- cid是你登录后url里面的参数，代表course_id~
 - 若登录失效，删除`cookies.json`再重新运行脚本
-- 遇到msedgedriver版本不匹配，可在该地址下载最新版的驱动 https://msedgewebdriverstorage.z22.web.core.windows.net/
 ### 功能
 - 模拟登录，支持QQ / 微信，获取cookies
 - 下载单个视频

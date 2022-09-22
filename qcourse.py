@@ -3,7 +3,9 @@ import json
 import re
 from pathlib import Path
 from uuid import uuid1
-from playwright.sync_api import sync_playwright
+
+import browser_cookie3
+from requests.utils import dict_from_cookiejar, cookiejar_from_dict
 
 import utils
 from logger import logger
@@ -16,7 +18,6 @@ from utils import (
     choose_chapter,
     get_courses_from_chapter,
     get_chapters_from_file,
-    get_video_rec,
 )
 from downloader import download_single
 from downloader_m3u8 import download_m3u8_raw as m3u8_down
@@ -28,27 +29,12 @@ if not COURSE_DIR.exists():
 
 
 class QCourse:
-    def __init__(self):
-        self.p = sync_playwright().start()
-        self.browser = self.p.chromium.launch(channel='msedge', headless=False)
-        self.context = self.browser.new_context()
-
     def login(self):
         if not self.is_login():
-            page = self.context.new_page()
-            page.goto('https://ke.qq.com/')
-            page.click('#js_login')
-            # wait for login
-            print('未检测到cookies，请先登录...')
-            page.wait_for_selector('.login-mask', state='attached')
-            page.wait_for_selector('.login-mask', state='detached')
-            self.save_cookies(page.context.cookies())
-            page.close()
-            print('登录成功')
-
-    def close(self):
-        self.browser.close()
-        self.p.stop()
+            # Todo: 默认用edge，下版本考虑添加浏览器选择
+            cj = browser_cookie3.edge(domain_name='ke.qq.com')
+            self.save_cookies(dict_from_cookiejar(cj))
+            print('登陆成功！')
 
     @staticmethod
     def is_login():
@@ -57,13 +43,13 @@ class QCourse:
     @staticmethod
     def save_cookies(cookies):
         with open('cookies.json', 'w') as f:
-            f.write(json.dumps(cookies))
+            json.dump(cookies, f, indent=4)
 
     @staticmethod
     def load_cookie():
         cookies = Path('cookies.json')
         if cookies.exists():
-            return json.loads(cookies.read_bytes())
+            return cookiejar_from_dict(json.loads(cookies.read_bytes()))
 
     @staticmethod
     def clear_cookies():
@@ -113,7 +99,6 @@ def main():
     # 实在不想再抓包了，等一个大佬去掉playwright依赖，改成输入账户密码，或者获取登录二维码也行
     qq_course = QCourse()
     qq_course.login()
-    qq_course.close()
     # =========================================
     if chosen == 0:
         course_url = input('输入课程链接：')

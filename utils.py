@@ -7,15 +7,12 @@ import sys
 import time
 from pathlib import Path
 
-import browser_cookie3
 import requests
 from requests.utils import dict_from_cookiejar, cookiejar_from_dict
 import json
 import subprocess
 from urllib.parse import urlparse, parse_qs
 from urllib.request import getproxies
-
-from logger import logger
 
 
 class API:
@@ -301,7 +298,6 @@ def get_token_for_key_url(term_id, cid):
             CURRENT_USER['token'] = str_token
 
     # 直接从CURRENT_USER里读取参数
-    logger.info(CURRENT_USER)
     return base64.b64encode(CURRENT_USER.get('token').encode()).decode()[:-2]
 
 

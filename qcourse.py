@@ -29,12 +29,32 @@ if not COURSE_DIR.exists():
 
 
 class QCourse:
+
     def login(self):
         if not self.is_login():
             # Todo: 默认用edge，下版本考虑添加浏览器选择
-            cj = browser_cookie3.edge(domain_name='ke.qq.com')
+            cj = self.get_cookies()
             self.save_cookies(dict_from_cookiejar(cj))
             print('登陆成功！')
+            logger.info(dict_from_cookiejar(cj))
+
+    def get_cookies(self):
+        if not self.is_login():
+            browsers = {
+                'Chrome': browser_cookie3.chrome,
+                'FireFox': browser_cookie3.firefox,
+                'Opera': browser_cookie3.opera,
+                'Edge': browser_cookie3.edge,
+                'Chromium': browser_cookie3.Chromium,
+                'Brave': browser_cookie3.brave,
+                'Vivaldi': browser_cookie3.vivaldi,
+                'Safari': browser_cookie3.safari,
+            }
+            print('登录腾讯课堂(https://ke.qq.com)，然后选择你安装的浏览器')
+            browser_menu = list(browsers.keys())
+            print_menu(browser_menu)
+            chosen = int(input('请选择你的浏览器序号：'))
+            return browsers[browser_menu[chosen]](domain_name='ke.qq.com')
 
     @staticmethod
     def is_login():
@@ -94,9 +114,6 @@ def main():
     menu = ['下载单个视频', '下载课程指定章节', '下载课程全部视频', '退出登录']
     print_menu(menu)
     chosen = int(input('\n输入需要的功能：'))
-    # ================大佬看这里================
-    # 只有这一个地方用到了playwright，用来模拟登录
-    # 实在不想再抓包了，等一个大佬去掉playwright依赖，改成输入账户密码，或者获取登录二维码也行
     qq_course = QCourse()
     qq_course.login()
     # =========================================

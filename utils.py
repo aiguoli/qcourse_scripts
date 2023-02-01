@@ -19,7 +19,7 @@ class API:
     ItemsUri = 'https://ke.qq.com/cgi-bin/course/get_terms_detail'
     TokenUri = 'https://ke.qq.com/cgi-bin/qcloud/get_token'
     MediaUri = 'https://playvideo.qcloud.com/getplayinfo/v2/1258712167/'
-    InfoUri = 'https://ke.qq.com/cgi-bin/identity/info?'
+    InfoUri = 'https://ke.qq.com/cgi-bin/identity/info'
     BasicInfoUri = 'https://ke.qq.com/cgi-bin/course/basic_info?cid={cid}'
     MiniAppQrcode = 'https://ke.qq.com/cgi-proxy/get_miniapp_qrcode?'
     LoginState = 'https://ke.qq.com/cgi-proxy/get_login_state?'

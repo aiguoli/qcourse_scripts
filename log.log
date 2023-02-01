@@ -1,0 +1,13 @@
+2023-02-01 10:59:42,603 - INFO - {'auth_version': '2.0', 'ke_login_type': '1', 'mix_login_mode': 'true', 'p_luin': '2300043476', 'p_uin': '2300043476', 'tdw_data_flowid': '', 'tdw_data_new_2': '{"auin":"-","sourcetype":"","sourcefrom":"","ver9":"2300043476","uin":"2300043476","visitor_id":"26124619571445673","ver10":"","url_page":"","url_module":"","url_position":""}', 'tdw_data_testid': '', 'ts_uid': '8324375135', 'uid_a2': 'a3e6b6ba1b26e30bdad98585d2dea9f60dfafa31b27d22967e4940b35d857cef06a0bbf67607afb038cf88a464e62e8907b0fe08f1af5a8605ec73cc5ebc229f1e3fda8476089f03', 'uid_origin_auth_type': '1003', 'uid_origin_uid_type': '0', 'uid_type': '0', 'uid_uin': '2300043476', 'uin': '2300043476'}
+2023-02-01 10:59:56,352 - INFO - cid: 2677129，name: 3小时搞定Python asyncio异步编程, term: 102783549, chapter: asyncio异步编程（一）
+2023-02-01 11:00:26,051 - INFO - cid: 2677129，name: 3小时搞定Python asyncio异步编程, term: 102783549, chapter: asyncio异步编程（一）
+2023-02-01 11:00:43,279 - INFO - Download 01 课程介绍
+2023-02-01 11:00:45,973 - INFO - Download 04 asyncio事件循环
+2023-02-01 11:00:51,514 - INFO - Download 10 异步和非异步模块混合案例
+2023-02-01 11:00:53,188 - INFO - Download 05 asyncio异步编程：快速上手
+2023-02-01 11:00:54,916 - INFO - Download 08 asyncio异步编程：future对象
+2023-02-01 11:01:03,432 - INFO - Download 06 asyncio异步编程：await关键
+2023-02-01 11:01:08,228 - INFO - Download 09 concurrent的Future对象
+2023-02-01 11:01:11,457 - INFO - Download 03 协程意义
+2023-02-01 11:01:13,097 - INFO - Download 07 asyncio异步编程：task对象
+2023-02-01 11:01:14,622 - INFO - Download 02 协程
